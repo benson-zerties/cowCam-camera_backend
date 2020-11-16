@@ -8,26 +8,11 @@ import json
 from abc import ABC
 
 def analyse_input_format(uri):
-    ffprobe_cmd = "ffprobe -v quiet -print_format json -show_format %s" % (uri)
+    ffprobe_cmd = "ffprobe -v quiet -show_entries stream=width,height -print_format json -show_format %s" % (uri)
     try:
         ffprobe_output = subprocess.check_output(shlex.split(ffprobe_cmd), bufsize=-1)
         return json.loads(ffprobe_output.decode('utf-8'))
         
-    except subprocess.CalledProcessError as e:
-        print("Bad input stream: %s" % (uri))
-        raise
-
-def analyse_input_stream(uri):
-    ffprobe_cmd_stream = "ffprobe -v quiet -print_format json -show_streams %s" % (uri)
-    try:
-        ffprobe_output = subprocess.check_output(shlex.split(ffprobe_cmd_str), bufsize=-1)
-
-        media_format_obj = json.loads(ffprobe_output.decode('utf-8'))
-        # search for first video stream
-        for s in media_format_obj['streams']:
-            if s['codec_type'] == 'video':
-                return s
-     
     except subprocess.CalledProcessError as e:
         print("Bad input stream: %s" % (uri))
         raise

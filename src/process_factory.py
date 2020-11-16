@@ -3,7 +3,6 @@
 
 import abc
 
-#class ProcessMetaFactory(object, metaclass=abc.ABCMeta):
 class ProcessFactory(object, metaclass=abc.ABCMeta):
     """
     Factory, producing a list of of factories???

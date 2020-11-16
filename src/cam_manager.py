@@ -48,8 +48,10 @@ class CamManager(Borg):
             self._cfg_obj = None
         if not hasattr(self,'_cam_obj'):
             self._cam_obj = dict()
-        if not hasattr(self,'proc_factory_generator'):
+        if not hasattr(self,'_proc_factory_generator'):
             self._proc_factory_generator = None
+        if not hasattr(self,'_cam_list'):
+            self._cam_list = None
 
     def loadConfig(self, filename, proc_factory_generator):
         self._proc_factory_generator = proc_factory_generator
@@ -65,6 +67,7 @@ class CamManager(Borg):
             logging.error('Could not open configuration file')
             raise
 
+        self._cam_list = list()
         for cam in self._cfg_obj['cameras']:
             # start a command thread for each camera-thread
             q = queue.Queue()
@@ -73,6 +76,12 @@ class CamManager(Borg):
             t.start()
             # each cam has a: (command-thread, command-queue, thread that controlls all video processing processes of 1 cam)
             self._cam_obj[cam['cam_no']] = dict(invocer=t, cmd_queue=q, cam_thread=None)
+            # add cam-number to cam_list
+            self._cam_list.append(cam['cam_no'])
+
+    @property
+    def cam_list(self):
+        return self._cam_list
 
     def start(self, cam_id):
         """
@@ -96,7 +105,8 @@ class CamManager(Borg):
                 logging.debug('Starting thread for cam %d' % (cam_id))
 
                 process_factory = self._proc_factory_generator(cam_cfg, output_dir)
-                self._cam_obj[cam_id]['cam_thread'] = CamHandlerThread( cam_cfg, process_factory, cam_id )
+                print('process_factory: ', process_factory)
+                self._cam_obj[cam_id]['cam_thread'] = CamHandlerThread( process_factory, cam_id )
                 self._cam_obj[cam_id]['cam_thread'].attachObserver(PlaylistManager(output_dir))
                 self._cam_obj[cam_id]['cam_thread'].start()
        

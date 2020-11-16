@@ -1,0 +1,36 @@
+main_interactive.py:
+ * start/stop cameras from an interactive shell
+ 
+cam_handler_remote.py
+ * entry point to camera backend
+
+cam_manager.py
+ * load the configuration
+ * starts a command queue for every camera
+ * submits start/stop commands to the queue
+  
+cam_handler_thread.py
+ * maintains/starts/stops the encoding subprocesses
+
+playlist_manager.py
+ * is an observer of the cam_handler_thread and updates the master playlist
+
+ffmpeg_cmd_builder.py
+ * compose ffmpeg command
+ * run ffprobe
+
+ffmpeg_process_factory.py
+ * creates process factories for later execution of the ffmpeg process
+
+hls_playlist.py
+ * maintains a list of the different versions of a single input stream
+ * implements ordering by BANDWIDTH
+
+process_factory.py
+ * abstract base class
+
+transcoding_observer.py
+ * abstract base class
+
+zmq_process.py
+ * base class for all zmq implementers

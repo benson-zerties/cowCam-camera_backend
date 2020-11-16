@@ -17,19 +17,6 @@ import collections.abc
 
 from functools import total_ordering
 
-
-def m3u_get_items(filename):
-    items = list()
-    try:
-        with pathlib.Path(filename).open('r') as f:
-            for line in f:
-                if line.strip().startswith('#'):
-                    continue
-                items.append(line)
-    except FileNotFoundError:
-        return None
-    return items
-
 # HLS Playlist handling
 @total_ordering
 class PlaylistItem(collections.abc.MutableMapping):
@@ -37,8 +24,11 @@ class PlaylistItem(collections.abc.MutableMapping):
     if total ordering decorator is used, not all 6 comparison methods need to be
     implemented for the class
     """
-    def __init__(self, init_dict):
-        self._data = dict(init_dict)
+    def __init__(self, playlist_name, stream_details):
+        self._data = dict((('name', playlist_name),
+                           ('bandwidth', int(stream_details['format']['bit_rate'])),
+                           ('width', int(stream_details['streams'][0]['width'])), 
+                           ('height', int(stream_details['streams'][0]['height']))))
 
     def keys(self):
         return self._data.keys()
@@ -78,7 +68,8 @@ def export_to_file(filename):
         with pathlib.Path(filename).open('w') as f:
             f.write('#EXTM3U\n')
             for item in playlist:
-                f.write('#EXT-X-STREAM-INF:BANDWIDTH=%d\n' % (item['bandwidth']))
+                f.write('#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=%d,RESOLUTION=%dx%d\n' %
+                        (item['bandwidth'],item['width'],item['height']))
                 f.write('%s\n' % (item['name']))
     return func
 

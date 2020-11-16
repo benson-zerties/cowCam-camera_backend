@@ -13,9 +13,10 @@ def ffmpeg_proc_factory_gen(cam_obj, target_dir):
     """Generates a list of FfmpegProcessFactories
     """
     process_descriptors = list()
-
     for s in cam_obj['sources']:
         process_descriptors.append(FfmpegProcessFactory(s, target_dir))
+
+    return process_descriptors
 
 
 class FfmpegProcessFactory(ProcessFactory):
@@ -30,6 +31,9 @@ class FfmpegProcessFactory(ProcessFactory):
         """A callable process closure
         """
         return self._process_descriptor
+
+    def fileList(self):
+        return self.files
 
     def _ffmpeg_context_creator(stream_src, target_dir):
         """ffmpeg_context_creator returns a function that can be executed to create a ffmpeg instance
@@ -56,6 +60,7 @@ class FfmpegProcessFactory(ProcessFactory):
         logging.info('Composing ffmpeg command: %s' % (ffmpeg_cmd))
 
         def ffmpeg_process():
+            logging.info('starting ffmpeg')
             return subprocess.Popen(shlex.split(ffmpeg_cmd))
 
         return ffmpeg_process, playlist_files

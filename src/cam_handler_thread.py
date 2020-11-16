@@ -1,23 +1,8 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os
-import signal
-import subprocess
 import logging
-
-import shutil
-import json
-# python3-yaml
-import yaml
-import pathlib
-import shlex
 import threading
-import time
-import hashlib
-
-
-from contextlib import suppress
 
 class CamHandlerThread (threading.Thread):
     """CamHandlerThread controls 1 camera
@@ -28,12 +13,12 @@ class CamHandlerThread (threading.Thread):
     Observers:
      * are interested in dead processes to discard to playlist file??
     """
-    def __init__(self, process_factory, cam_id):
+    def __init__(self, process_descriptors, cam_id):
         super().__init__()
         self._cam_id    = cam_id
         self._observers = list()
         # list of factory methods to start processes
-        self.process_factory = process_factory
+        self.process_descriptors = process_descriptors
         self.process_factory_active = list()
         # list of processes to keep track of
         self._stop_event = threading.Event()
@@ -60,7 +45,7 @@ class CamHandlerThread (threading.Thread):
 
     def notify(self):
         for o in self._observers:
-            logging.info('Observer notifed: %s' % (o))
+            logging.info('Observer notifed: %s' % (type(o).__name__))
             o.update(self)
 
     def stop(self):
@@ -70,8 +55,11 @@ class CamHandlerThread (threading.Thread):
         playlists = list()
         proc_context = list()
         event_timeout_base = 2
-        process_factories = [ p.factoryMethods for p in self.process_factory ]
+        process_factories = [ p.factoryMethods() for p in self.process_descriptors ]
+        print('process_factories...', process_factories)
+        # start all processes
         ffmpeg_procs      = [ proc() for proc in process_factories ]
+        print('ffmpeg_procs...', ffmpeg_procs)
         logging.info('Entering control loop for cam %d' % (self._cam_id))
         event_timeout = event_timeout_base
         while not (self._stop_event.wait(timeout=event_timeout)):
@@ -80,7 +68,7 @@ class CamHandlerThread (threading.Thread):
             for idx,proc in enumerate(ffmpeg_procs):
                 if proc.poll() == None:
                     # process is still running
-                    self.process_factory_active.append(process_factories[idx])
+                    self.process_factory_active.append(self.process_descriptors[idx])
                 else:
                     logging.warning('ffmpeg died -> restart')
                     # process died -> restart
@@ -112,6 +100,11 @@ class CamHandlerThread (threading.Thread):
 
 
 if __name__ == '__main__':
+    import os
+    import signal
+    import yaml
+    import pathlib
+
     cfg_obj = None
     os.setpgrp()
 

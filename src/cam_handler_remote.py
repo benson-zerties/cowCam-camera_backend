@@ -30,6 +30,10 @@ def stop(*cam_id):
     CamManager().stop(cam_id[0])
     return "cam_stopped"
 
+@my_dispatcher.add_method
+def list():
+    return CamManager().cam_list
+
 def handle_json(manager, message):
     """Callback function, called if new message is received."""
 
@@ -77,8 +81,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     logging.basicConfig(
-        filename = "cam_handler_remote.log",
-        #stream = sys.stdout,
+        #filename = "cam_handler_remote.log",
+        stream = sys.stdout,
         level = logging.DEBUG,
         filemode = "a",
         format = "%(asctime)s %(funcName)s Line:%(lineno)s [%(levelname)-8s] %(message)s",
