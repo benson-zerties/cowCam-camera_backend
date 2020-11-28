@@ -16,6 +16,8 @@ from jsonrpc import JSONRPCResponseManager, Dispatcher
 
 from cam_manager import CamManager
 from ffmpeg_process_factory import ffmpeg_proc_factory_gen
+from capture_image_thread import CaptureImageThread
+
 my_dispatcher = Dispatcher()
 
 @my_dispatcher.add_method
@@ -29,6 +31,12 @@ def stop(*cam_id):
     print("Stopping cam %d" % cam_id[0])
     CamManager().stop(cam_id[0])
     return "cam_stopped"
+
+@my_dispatcher.add_method
+def capture_image(*cam_id):
+    print("Capturing image from %d" % cam_id[0])
+    CamManager().capture_image(cam_id[0])
+    return "cam_image_captured"
 
 @my_dispatcher.add_method
 def list():
@@ -101,7 +109,14 @@ if __name__ == '__main__':
         parser.print_help()
         sys.exit(2)
 
+    updateRate_s = 2*60
+    cap_img = CaptureImageThread(CamManager(), updateRate_s)
+    cap_img.setDaemon(True)
+    cap_img.start()
+
     a.setDaemon(True)
     a.start()
+
     a.join()
+    cap_img.join()
     logging.shutdown()

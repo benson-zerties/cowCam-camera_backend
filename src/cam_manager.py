@@ -9,6 +9,7 @@ import shutil
 import threading
 import queue
 import logging
+import requests
 
 from cam_handler_thread import CamHandlerThread
 from playlist_manager import PlaylistManager
@@ -83,6 +84,32 @@ class CamManager(Borg):
     def cam_list(self):
         return self._cam_list
 
+    def capture_image(self, cam_id):
+        """
+        Submit capture image command to queue and return command queue.
+        """
+        if not self._cfg_obj:
+            raise Exception('No yaml configuration loaded')
+
+        root_dir = pathlib.PurePath(self._cfg_obj['hls_dir'])
+        cam_cfg = [ cam for cam in self._cfg_obj['cameras'] if cam['cam_no'] == cam_id ]
+        if not cam_cfg:
+            return None
+
+        def cmd():
+            r = requests.get(cam_cfg[0]['screen_capture'])
+            output_file = pathlib.PurePath(root_dir, str(cam_cfg[0]['cam_no']) + '.jpg')
+            with open(str(output_file), 'wb') as f:
+                f.write(r.content)
+
+        try:
+            self._cam_obj[cam_id]['cmd_queue'].put(cmd)
+            return self._cam_obj[cam_id]['cmd_queue']
+        except IndexError:
+            logging.warning('Invalid cam-id specified: %d' % cam_id)
+            return None
+
+
     def start(self, cam_id):
         """
         Submit start-stream command to queue and return command queue.
@@ -122,11 +149,20 @@ class CamManager(Borg):
         """
         Submit stop-stream command to queue and return command queue.
         """
+        
+        root_dir = pathlib.PurePath(self._cfg_obj['hls_dir'])
+        cam_cfg = [ cam for cam in self._cfg_obj['cameras'] if cam['cam_no'] == cam_id ][0]
+        
         def cmd():
-            self._cam_obj[cam_id]['cam_thread'].stop()
-            self._cam_obj[cam_id]['cam_thread'].join()
-            self._cam_obj[cam_id]['cam_thread'] = None
-
+            if self._cam_obj[cam_id]['cam_thread']:
+                self._cam_obj[cam_id]['cam_thread'].stop()
+                self._cam_obj[cam_id]['cam_thread'].join()
+                self._cam_obj[cam_id]['cam_thread'] = None
+            # cleanup output dir
+            output_dir = pathlib.PurePath(root_dir, str(cam_cfg['cam_no']))
+            with suppress(Exception):
+                shutil.rmtree(str(output_dir))
+        
         try:
             self._cam_obj[cam_id]['cmd_queue'].put(cmd)
             return self._cam_obj[cam_id]['cmd_queue']

@@ -56,10 +56,8 @@ class CamHandlerThread (threading.Thread):
         proc_context = list()
         event_timeout_base = 2
         process_factories = [ p.factoryMethods() for p in self.process_descriptors ]
-        print('process_factories...', process_factories)
         # start all processes
         ffmpeg_procs      = [ proc() for proc in process_factories ]
-        print('ffmpeg_procs...', ffmpeg_procs)
         logging.info('Entering control loop for cam %d' % (self._cam_id))
         event_timeout = event_timeout_base
         while not (self._stop_event.wait(timeout=event_timeout)):
