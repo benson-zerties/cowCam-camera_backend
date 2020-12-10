@@ -161,8 +161,10 @@ class CamManager(Borg):
             # cleanup output dir
             output_dir = pathlib.PurePath(root_dir, str(cam_cfg['cam_no']))
             with suppress(Exception):
+                logging.debug('Removing output directory: %s' % output_dir)
                 shutil.rmtree(str(output_dir))
         
+        # try to submit the command
         try:
             self._cam_obj[cam_id]['cmd_queue'].put(cmd)
             return self._cam_obj[cam_id]['cmd_queue']
