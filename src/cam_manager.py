@@ -10,6 +10,7 @@ import threading
 import queue
 import logging
 import requests
+import traceback
 
 from cam_handler_thread import CamHandlerThread
 from playlist_manager import PlaylistManager
@@ -17,7 +18,13 @@ from playlist_manager import PlaylistManager
 def invocer(*queue, **kwargs):
     while(True):
         f = queue[0].get()
-        f()
+        try:
+            f()
+        except Exception as e:
+            # catch all exceptions if submitted command fails
+            print("Command execution failed", e)
+            traceback.print_exc()
+
 
 class Borg(object):
     """
@@ -101,7 +108,6 @@ class CamManager(Borg):
             output_file = pathlib.PurePath(root_dir, str(cam_cfg[0]['cam_no']) + '.jpg')
             with open(str(output_file), 'wb') as f:
                 f.write(r.content)
-
         try:
             self._cam_obj[cam_id]['cmd_queue'].put(cmd)
             return self._cam_obj[cam_id]['cmd_queue']

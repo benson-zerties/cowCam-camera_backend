@@ -85,13 +85,14 @@ class CamHandlerRemote(ZmqThread):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', type=str, help="Specify the yaml configuration file")
-    parser.add_argument('-p', '--port', type=int, help="Specify the port to listen to", )
+    parser.add_argument('-p', '--port', type=int, help="Specify the port to listen to")
+    parser.add_argument('-v', '--verbosity', type=int, default=50, help="10: DEBUG, ..., 50: Critical")
     args = parser.parse_args()
 
     logging.basicConfig(
         #filename = "cam_handler_remote.log",
         stream = sys.stdout,
-        level = logging.DEBUG,
+        level = args.verbosity,
         filemode = "a",
         format = "%(asctime)s %(funcName)s Line:%(lineno)s [%(levelname)-8s] %(message)s",
         datefmt = "%H:%M:%S")
